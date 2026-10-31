@@ -30,23 +30,41 @@ function normalizeBooking(booking) {
   }
 }
 
-export const fetchBookings = createAsyncThunk('booking/fetchBookings', async () => {
-  const { data } = await api.get('/bookings')
-  return data.data.map(normalizeBooking)
-})
-
-export const createBooking = createAsyncThunk(
-  'booking/createBooking',
-  async ({ showtimeId, selectedSeats }) => {
-    const { data } = await api.post('/bookings', { showtimeId, selectedSeats })
-    return normalizeBooking(data.data)
+export const fetchBookings = createAsyncThunk(
+  'booking/fetchBookings',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get('/bookings')
+      return data.data.map(normalizeBooking)
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message)
+    }
   },
 )
 
-export const cancelBooking = createAsyncThunk('booking/cancelBooking', async (bookingId) => {
-  const { data } = await api.patch(`/bookings/${bookingId}/cancel`)
-  return normalizeBooking(data.data)
-})
+export const createBooking = createAsyncThunk(
+  'booking/createBooking',
+  async ({ showtimeId, selectedSeats }, { rejectWithValue }) => {
+    try {
+      const { data } = await api.post('/bookings', { showtimeId, selectedSeats })
+      return normalizeBooking(data.data)
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message)
+    }
+  },
+)
+
+export const cancelBooking = createAsyncThunk(
+  'booking/cancelBooking',
+  async (bookingId, { rejectWithValue }) => {
+    try {
+      const { data } = await api.patch(`/bookings/${bookingId}/cancel`)
+      return normalizeBooking(data.data)
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message)
+    }
+  },
+)
 
 const bookingSlice = createSlice({
   name: 'booking',
@@ -95,7 +113,7 @@ const bookingSlice = createSlice({
       })
       .addCase(fetchBookings.rejected, (state, action) => {
         state.bookingsStatus = 'failed'
-        state.bookingsError = action.error.message
+        state.bookingsError = action.payload || action.error.message
       })
       .addCase(createBooking.pending, (state) => {
         state.status = 'loading'
@@ -108,7 +126,7 @@ const bookingSlice = createSlice({
       })
       .addCase(createBooking.rejected, (state, action) => {
         state.status = 'failed'
-        state.error = action.error.message
+        state.error = action.payload || action.error.message
       })
       .addCase(cancelBooking.pending, (state) => {
         state.status = 'loading'
@@ -121,7 +139,7 @@ const bookingSlice = createSlice({
       })
       .addCase(cancelBooking.rejected, (state, action) => {
         state.status = 'failed'
-        state.error = action.error.message
+        state.error = action.payload || action.error.message
       })
   },
 })

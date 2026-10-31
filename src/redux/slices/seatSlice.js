@@ -19,6 +19,10 @@ const seatSlice = createSlice({
       const seat = state.items.find((item) => item.seatNumber === seatNumber)
       if (!seat || seat.status === 'occupied') return
 
+      const currentlySelectedCount = state.items.filter((item) => item.selected).length
+      // Enforce maximum 6 seats limit
+      if (!seat.selected && currentlySelectedCount >= 6) return
+
       seat.selected = !seat.selected
     },
     clearSelectedSeats(state) {

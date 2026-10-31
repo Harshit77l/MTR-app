@@ -37,15 +37,37 @@ export default function Register() {
 
   return (
     <AuthLayout mode="register" location={location}>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <AuthField label="Name" type="text" value={form.name} onChange={(value) => setForm({ ...form, name: value })} />
-        <AuthField label="Email" type="email" value={form.email} onChange={(value) => setForm({ ...form, email: value })} />
-        <AuthField label="Password" type="password" value={form.password} onChange={(value) => setForm({ ...form, password: value })} />
-        <AuthField label="Confirm Password" type="password" value={form.confirmPassword} onChange={(value) => setForm({ ...form, confirmPassword: value })} />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <AuthField
+          placeholder="Name"
+          type="text"
+          value={form.name}
+          onChange={(value) => setForm({ ...form, name: value })}
+        />
+        <AuthField
+          placeholder="Email ID"
+          type="email"
+          value={form.email}
+          onChange={(value) => setForm({ ...form, email: value })}
+        />
+        <AuthField
+          placeholder="Password"
+          type="password"
+          value={form.password}
+          onChange={(value) => setForm({ ...form, password: value })}
+        />
+        <AuthField
+          placeholder="Confirm Password"
+          type="password"
+          value={form.confirmPassword}
+          onChange={(value) => setForm({ ...form, confirmPassword: value })}
+        />
         {(formError || error) && <p className="text-sm text-rose-500">{formError || error}</p>}
-        <PrimaryButton type="submit" className="mt-10" disabled={status === 'loading'}>
-          {status === 'loading' ? 'Creating account...' : 'Create account'}
-        </PrimaryButton>
+        <div className="pt-12">
+          <PrimaryButton type="submit" disabled={status === 'loading'}>
+            {status === 'loading' ? 'Signing Up...' : 'Sign Up'}
+          </PrimaryButton>
+        </div>
       </form>
     </AuthLayout>
   )

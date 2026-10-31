@@ -40,8 +40,13 @@ export function useBooking() {
     updateSelection: (partial) => dispatch(updateSelection(partial)),
     toggleFavorite: (movieId) => dispatch(toggleFavorite(movieId)),
     toggleSeat: (seatId) => {
+      const isSelected = selection.seats.includes(seatId)
+      // Enforce maximum 6 seats limit
+      if (!isSelected && selection.seats.length >= 6) {
+        return
+      }
       dispatch(toggleSeatAction(seatId))
-      const currentSeats = selection.seats.includes(seatId)
+      const currentSeats = isSelected
         ? selection.seats.filter((seat) => seat !== seatId)
         : [...selection.seats, seatId]
       dispatch(updateSelection({ seats: currentSeats }))

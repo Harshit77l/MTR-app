@@ -41,6 +41,86 @@ function populateBooking(query) {
     .populate('showtime', 'screenName date startTime format ticketPrice')
 }
 
+async function performBooking({ showtimeId, selectedSeats, userId, session = null }) {
+  const findQuery = Showtime.findById(showtimeId)
+  if (session) findQuery.session(session)
+  const showtime = await findQuery
+
+  if (!showtime) {
+    throw new ApiError(404, 'Showtime not found')
+  }
+
+  const availableSeats = new Set(
+    showtime.seats
+      .filter((seat) => seat.status === 'available')
+      .map((seat) => seat.seatNumber),
+  )
+
+  if (selectedSeats.some((seat) => !availableSeats.has(seat))) {
+    throw new ApiError(409, 'One or more selected seats are unavailable')
+  }
+
+  const updateOptions = {
+    arrayFilters: [{ 'seat.seatNumber': { $in: selectedSeats }, 'seat.status': 'available' }],
+  }
+  if (session) updateOptions.session = session
+
+  const seatUpdate = await Showtime.updateOne(
+    {
+      _id: showtimeId,
+      $and: selectedSeats.map((seat) => ({
+        seats: { $elemMatch: { seatNumber: seat, status: 'available' } },
+      })),
+    },
+    { $set: { 'seats.$[seat].status': 'occupied' } },
+    updateOptions,
+  )
+
+  if (seatUpdate.modifiedCount !== 1) {
+    throw new ApiError(409, 'One or more selected seats are unavailable')
+  }
+
+  const ticketCount = selectedSeats.length
+  const bookingFee = getBookingFee()
+  const totalAmount = ticketCount * showtime.ticketPrice + bookingFee
+
+  const bookingData = {
+    user: userId,
+    bookingId: `BK-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+    showtime: showtime._id,
+    movie: showtime.movie,
+    theatre: showtime.theatre,
+    selectedSeats,
+    ticketCount,
+    ticketPrice: showtime.ticketPrice,
+    bookingFee,
+    totalAmount,
+    status: 'confirmed',
+  }
+
+  let booking
+  try {
+    if (session) {
+      const created = await Booking.create([bookingData], { session })
+      booking = created[0]
+    } else {
+      booking = await Booking.create(bookingData)
+    }
+  } catch (err) {
+    // If running in standalone mode without a transaction and creation fails, restore seats
+    if (!session) {
+      await Showtime.updateOne(
+        { _id: showtimeId },
+        { $set: { 'seats.$[seat].status': 'available' } },
+        { arrayFilters: [{ 'seat.seatNumber': { $in: selectedSeats } }] },
+      )
+    }
+    throw err
+  }
+
+  return booking
+}
+
 export async function createBooking(req, res) {
   const { showtimeId, selectedSeats } = req.body
   assertUniqueSeats(selectedSeats)
@@ -50,84 +130,35 @@ export async function createBooking(req, res) {
   }
 
   const session = await mongoose.startSession()
+  let booking
 
   try {
-    let booking
-
     await session.withTransaction(async () => {
-      const showtime = await Showtime.findById(showtimeId).session(session)
-
-      if (!showtime) {
-        throw new ApiError(404, 'Showtime not found')
-      }
-
-      const availableSeats = new Set(
-        showtime.seats
-          .filter((seat) => seat.status === 'available')
-          .map((seat) => seat.seatNumber),
-      )
-
-      if (selectedSeats.some((seat) => !availableSeats.has(seat))) {
-        throw new ApiError(409, 'One or more selected seats are unavailable')
-      }
-
-      const seatUpdate = await Showtime.updateOne(
-        {
-          _id: showtimeId,
-          $and: selectedSeats.map((seat) => ({
-            seats: { $elemMatch: { seatNumber: seat, status: 'available' } },
-          })),
-        },
-        { $set: { 'seats.$[seat].status': 'occupied' } },
-        {
-          arrayFilters: [{ 'seat.seatNumber': { $in: selectedSeats }, 'seat.status': 'available' }],
-          session,
-        },
-      )
-
-      if (seatUpdate.modifiedCount !== 1) {
-        throw new ApiError(409, 'One or more selected seats are unavailable')
-      }
-
-      const ticketCount = selectedSeats.length
-      const bookingFee = getBookingFee()
-      const totalAmount = ticketCount * showtime.ticketPrice + bookingFee
-      const createdBookings = await Booking.create(
-        [
-          {
-            user: req.user._id,
-            bookingId: `BK-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-            showtime: showtime._id,
-            movie: showtime.movie,
-            theatre: showtime.theatre,
-            selectedSeats,
-            ticketCount,
-            ticketPrice: showtime.ticketPrice,
-            bookingFee,
-            totalAmount,
-          },
-        ],
-        { session },
-      )
-
-      booking = createdBookings[0]
+      booking = await performBooking({
+        showtimeId,
+        selectedSeats,
+        userId: req.user._id,
+        session,
+      })
     })
-
-    const populatedBooking = await populateBooking(Booking.findById(booking._id))
-
-    return res.status(201).json({ success: true, data: populatedBooking })
   } catch (error) {
     if (transactionNotSupported(error)) {
-      throw new ApiError(
-        503,
-        'Booking requires MongoDB transactions. Use MongoDB Atlas or a local replica set.',
-      )
+      // Fallback for standalone MongoDB environments: execute atomic document-level operation
+      booking = await performBooking({
+        showtimeId,
+        selectedSeats,
+        userId: req.user._id,
+        session: null,
+      })
+    } else {
+      throw error
     }
-
-    throw error
   } finally {
     await session.endSession()
   }
+
+  const populatedBooking = await populateBooking(Booking.findById(booking._id))
+  return res.status(201).json({ success: true, data: populatedBooking })
 }
 
 export async function getBookings(req, res) {
@@ -146,58 +177,74 @@ export async function getBookingById(req, res) {
   return res.status(200).json({ success: true, data: booking })
 }
 
+async function performCancellation({ bookingId, userId, session = null }) {
+  const findQuery = Booking.findOne({
+    _id: bookingId,
+    user: userId,
+  })
+  if (session) findQuery.session(session)
+  const booking = await findQuery
+
+  if (!booking) {
+    throw new ApiError(404, 'Booking not found')
+  }
+
+  if (booking.status !== 'confirmed') {
+    throw new ApiError(409, 'Only confirmed bookings can be cancelled')
+  }
+
+  const updateOptions = {
+    arrayFilters: [{ 'seat.seatNumber': { $in: booking.selectedSeats } }],
+  }
+  if (session) updateOptions.session = session
+
+  const seatUpdate = await Showtime.updateOne(
+    { _id: booking.showtime },
+    { $set: { 'seats.$[seat].status': 'available' } },
+    updateOptions,
+  )
+
+  if (seatUpdate.matchedCount !== 1) {
+    throw new ApiError(404, 'Showtime not found for booking')
+  }
+
+  booking.status = 'cancelled'
+  if (session) {
+    await booking.save({ session })
+  } else {
+    await booking.save()
+  }
+
+  return booking
+}
+
 export async function cancelBooking(req, res) {
   const session = await mongoose.startSession()
+  let cancelledBooking
 
   try {
-    let cancelledBooking
-
     await session.withTransaction(async () => {
-      const booking = await Booking.findOne({
-        _id: req.params.id,
-        user: req.user._id,
-        status: 'confirmed',
-      }).session(session)
-
-      if (!booking) {
-        const existingBooking = await Booking.findOne({
-          _id: req.params.id,
-          user: req.user._id,
-        }).session(session)
-        if (!existingBooking) throw new ApiError(404, 'Booking not found')
-        throw new ApiError(409, 'Only confirmed bookings can be cancelled')
-      }
-
-      const seatUpdate = await Showtime.updateOne(
-        { _id: booking.showtime },
-        { $set: { 'seats.$[seat].status': 'available' } },
-        {
-          arrayFilters: [{ 'seat.seatNumber': { $in: booking.selectedSeats } }],
-          session,
-        },
-      )
-
-      if (seatUpdate.matchedCount !== 1) {
-        throw new ApiError(404, 'Showtime not found for booking')
-      }
-
-      booking.status = 'cancelled'
-      cancelledBooking = await booking.save({ session })
+      cancelledBooking = await performCancellation({
+        bookingId: req.params.id,
+        userId: req.user._id,
+        session,
+      })
     })
-
-    const populatedBooking = await populateBooking(Booking.findById(cancelledBooking._id))
-
-    return res.status(200).json({ success: true, data: populatedBooking })
   } catch (error) {
     if (transactionNotSupported(error)) {
-      throw new ApiError(
-        503,
-        'Cancellation requires MongoDB transactions. Use MongoDB Atlas or a local replica set.',
-      )
+      // Fallback for standalone MongoDB environments
+      cancelledBooking = await performCancellation({
+        bookingId: req.params.id,
+        userId: req.user._id,
+        session: null,
+      })
+    } else {
+      throw error
     }
-
-    throw error
   } finally {
     await session.endSession()
   }
+
+  const populatedBooking = await populateBooking(Booking.findById(cancelledBooking._id))
+  return res.status(200).json({ success: true, data: populatedBooking })
 }

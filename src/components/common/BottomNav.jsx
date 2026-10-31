@@ -12,7 +12,7 @@ export default function BottomNav() {
   const { pathname } = useLocation()
 
   return (
-    <nav className="absolute bottom-0 left-0 right-0 z-30 h-[72px] border-t border-slate-100 bg-white">
+    <nav className="mt-auto sticky bottom-0 left-0 right-0 z-30 h-[72px] shrink-0 border-t border-slate-100 bg-white">
       <div className="grid h-full grid-cols-4">
         {items.map((item) => {
           const Icon = item.icon
@@ -22,7 +22,7 @@ export default function BottomNav() {
               key={item.to}
               to={item.to}
               aria-label={item.label}
-              className="flex items-center justify-center"
+              className="flex items-center justify-center transition-colors hover:bg-slate-50"
             >
               <Icon
                 size={26}

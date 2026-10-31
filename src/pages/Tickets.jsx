@@ -17,8 +17,8 @@ export default function Tickets() {
   const list = tab === 'current' ? current : past
 
   return (
-    <div className="relative min-h-dvh bg-app pb-[84px]">
-      <div className="px-5 pt-5">
+    <div className="relative flex-1 flex flex-col min-h-full bg-app">
+      <div className="flex-1 px-5 pt-5 pb-6">
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -36,33 +36,35 @@ export default function Tickets() {
             Past Bookings
           </TabButton>
         </div>
-      </div>
 
-      <div className="space-y-4 px-5 pt-5">
-        {bookingError && <p className="text-sm text-rose-500">{bookingError}</p>}
-        {list.length === 0 && (
-          <p className="pt-10 text-center text-[14px] text-slate-400">No bookings yet.</p>
-        )}
-        {list.map((booking) => {
-          const movie = movies.find((item) => item.id === booking.movieId) || booking.movie
-          if (!movie) return null
-          return (
-            <TicketCard
-              key={booking.id}
-              movie={movie}
-              theatreName={booking.theatreName}
-              dateLabel={booking.dateLabel}
-              time={booking.time}
-              screen={booking.screen}
-              format={booking.format}
-              seats={booking.seats}
-              amount={booking.amount}
-              transactionDate={booking.transactionDate}
-              showCancel={tab === 'current'}
-              onCancel={() => cancelBooking(booking.id)}
-            />
-          )
-        })}
+        <div className="mt-5 space-y-4">
+          {bookingError && <p className="text-sm text-rose-500">{bookingError}</p>}
+          {list.length === 0 && (
+            <p className="pt-16 text-center text-[14px] text-slate-400">
+              {tab === 'current' ? 'No active bookings yet.' : 'No past bookings found.'}
+            </p>
+          )}
+          {list.map((booking) => {
+            const movie = movies.find((item) => item.id === booking.movieId) || booking.movie
+            if (!movie) return null
+            return (
+              <TicketCard
+                key={booking.id}
+                movie={movie}
+                theatreName={booking.theatreName}
+                dateLabel={booking.dateLabel}
+                time={booking.time}
+                screen={booking.screen}
+                format={booking.format}
+                seats={booking.seats}
+                amount={booking.amount}
+                transactionDate={booking.transactionDate}
+                showCancel={tab === 'current'}
+                onCancel={() => cancelBooking(booking.id)}
+              />
+            )
+          })}
+        </div>
       </div>
 
       <BottomNav />

@@ -14,14 +14,17 @@ export async function getShowtimes(req, res) {
     filter.theatre = req.query.theatre
   }
   if (req.query.date) {
-    const date = new Date(req.query.date)
-    if (Number.isNaN(date.getTime())) throw new ApiError(400, 'Invalid date query parameter')
-    filter.date = date
+    const startOfDay = new Date(req.query.date)
+    if (Number.isNaN(startOfDay.getTime())) throw new ApiError(400, 'Invalid date query parameter')
+    startOfDay.setUTCHours(0, 0, 0, 0)
+    const endOfDay = new Date(startOfDay)
+    endOfDay.setUTCDate(endOfDay.getUTCDate() + 1)
+    filter.date = { $gte: startOfDay, $lt: endOfDay }
   }
 
   const showtimes = await Showtime.find(filter)
     .populate('movie', 'title poster')
-    .populate('theatre', 'name location city')
+    .populate('theatre', 'name location city priceLabel logo')
     .sort({ date: 1, startTime: 1 })
 
   return res.status(200).json({ success: true, data: showtimes })

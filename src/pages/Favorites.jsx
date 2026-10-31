@@ -12,11 +12,11 @@ export default function Favorites() {
   const likedMovies = movies.filter((movie) => favorites.includes(movie.id))
 
   return (
-    <div className="relative min-h-dvh bg-app pb-[84px]">
-      <div className="px-5 pt-6">
+    <div className="relative flex-1 flex flex-col min-h-full bg-app">
+      <div className="flex-1 px-5 pt-6 pb-6">
         <h1 className="text-[22px] font-bold text-ink">Favorites</h1>
         {likedMovies.length === 0 ? (
-          <p className="mt-10 text-center text-[14px] text-slate-400">No favorite movies yet.</p>
+          <p className="mt-16 text-center text-[14px] text-slate-400">No favorite movies yet.</p>
         ) : (
           <div className="mt-5 grid grid-cols-3 gap-3">
             {likedMovies.map((movie) => (

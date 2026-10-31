@@ -27,43 +27,77 @@ export default function Login() {
 
   return (
     <AuthLayout mode="login" location={location}>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <AuthField label="Email" type="email" value={form.email} onChange={(value) => setForm({ ...form, email: value })} />
-        <AuthField label="Password" type="password" value={form.password} onChange={(value) => setForm({ ...form, password: value })} />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <AuthField
+          placeholder="Email ID"
+          type="email"
+          value={form.email}
+          onChange={(value) => setForm({ ...form, email: value })}
+        />
+        <AuthField
+          placeholder="Password"
+          type="password"
+          value={form.password}
+          onChange={(value) => setForm({ ...form, password: value })}
+        />
         {error && <p className="text-sm text-rose-500">{error}</p>}
-        <PrimaryButton type="submit" className="mt-[190px]" disabled={status === 'loading'}>
-          {status === 'loading' ? 'Signing in...' : 'Sign in'}
-        </PrimaryButton>
+        <div className="pt-24">
+          <PrimaryButton type="submit" disabled={status === 'loading'}>
+            {status === 'loading' ? 'Logging in...' : 'Login'}
+          </PrimaryButton>
+        </div>
       </form>
     </AuthLayout>
   )
 }
 
-function AuthField({ label, type, value, onChange }) {
+function AuthField({ placeholder, type, value, onChange }) {
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-[13px] font-medium text-ink">{label}</span>
-      <input required type={type} value={value} onChange={(event) => onChange(event.target.value)} className="h-[44px] w-full border-0 border-b border-[#c2c6d0] bg-transparent px-2 text-[14px] text-ink outline-none placeholder:text-[#697c9e] focus:border-brand" placeholder={label === 'Email' ? 'Email ID' : label} />
-    </label>
+    <div className="w-full">
+      <input
+        required
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-[46px] w-full border-0 border-b border-[#c2c6d0] bg-transparent px-1 text-[15px] text-[#2d3748] outline-none placeholder:text-[#8c9ba5] focus:border-brand transition-colors"
+        placeholder={placeholder}
+      />
+    </div>
   )
 }
 
 function AuthLayout({ mode, location, children }) {
   const isLogin = mode === 'login'
   return (
-    <div className="min-h-dvh bg-[#f7f8fd] px-5 pt-[86px]">
+    <div className="min-h-dvh bg-[#f7f8fd] px-6 pt-[72px]">
       <div className="flex flex-col items-center">
-        <img src="/images/login-logo.svg" alt="" className="h-11 w-[92px]" />
-        <h1 className="mt-7 text-center text-[20px] font-bold leading-[1.15] text-black">
+        <img src="/images/login-logo.svg" alt="" className="h-12 w-auto" />
+        <h1 className="mt-6 text-center text-[22px] font-bold leading-[1.2] text-[#0f172a]">
           Creative Upaay<br />Hiring Assignment
         </h1>
       </div>
-      <div className="mt-[62px]">
-        <div className="grid h-9 grid-cols-2 overflow-hidden rounded-[5px] bg-[#e8e8e8] text-[16px]">
-          <Link to="/login" state={location.state} className={`flex items-center justify-center ${isLogin ? 'bg-white font-semibold' : ''}`}>Login</Link>
-          <Link to="/register" state={location.state} className={`flex items-center justify-center ${!isLogin ? 'bg-white font-semibold' : ''}`}>Sign Up</Link>
+      <div className="mt-12">
+        <div className="grid h-10 grid-cols-2 p-1 overflow-hidden rounded-[8px] bg-[#e8ebf0] text-[15px]">
+          <Link
+            to="/login"
+            state={location.state}
+            className={`flex items-center justify-center rounded-[6px] transition-all ${
+              isLogin ? 'bg-white font-bold text-[#0f172a] shadow-sm' : 'text-[#64748b] font-medium'
+            }`}
+          >
+            Login
+          </Link>
+          <Link
+            to="/register"
+            state={location.state}
+            className={`flex items-center justify-center rounded-[6px] transition-all ${
+              !isLogin ? 'bg-white font-bold text-[#0f172a] shadow-sm' : 'text-[#64748b] font-medium'
+            }`}
+          >
+            Sign Up
+          </Link>
         </div>
-        <div className="mt-[55px]">{children}</div>
+        <div className="mt-10">{children}</div>
       </div>
     </div>
   )

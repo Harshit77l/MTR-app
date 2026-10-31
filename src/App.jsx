@@ -19,10 +19,13 @@ export default function App() {
   }, [dispatch, token])
 
   useEffect(() => {
-    if (!isAuthenticated) return
     dispatch(fetchMovies())
     dispatch(fetchTheatres())
     dispatch(fetchShowtimes())
+  }, [dispatch])
+
+  useEffect(() => {
+    if (!isAuthenticated) return
     dispatch(fetchBookings())
   }, [dispatch, isAuthenticated])
 

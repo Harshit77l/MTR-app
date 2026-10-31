@@ -11,15 +11,15 @@ export default function Profile() {
   const user = useSelector(selectCurrentUser)
 
   return (
-    <div className="relative min-h-dvh bg-app pb-[84px]">
-      <div className="px-5 pt-6">
+    <div className="relative flex-1 flex flex-col min-h-full bg-app">
+      <div className="flex-1 px-5 pt-6 pb-6">
         <h1 className="text-[22px] font-bold text-ink">Profile</h1>
         <div className="mt-8 flex flex-col items-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-brand shadow-sm">
             <UserRound size={36} />
           </div>
-          <p className="mt-4 text-[16px] font-semibold text-ink">{user?.name}</p>
-          <p className="mt-1 text-[13px] text-slate-400">{user?.email}</p>
+          <p className="mt-4 text-[16px] font-semibold text-ink">{user?.name || 'User'}</p>
+          <p className="mt-1 text-[13px] text-slate-400">{user?.email || ''}</p>
           <PrimaryButton
             className="mt-6"
             onClick={() => {

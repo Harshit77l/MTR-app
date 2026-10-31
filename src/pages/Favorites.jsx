@@ -1,12 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/common/BottomNav'
 import MovieCard from '../components/movies/MovieCard'
-import { movies } from '../data/mockData'
 import { useBooking } from '../hooks/useBooking'
+import { useSelector } from 'react-redux'
+import { selectMovies } from '../redux/slices/movieSlice'
 
 export default function Favorites() {
   const { favorites, updateSelection } = useBooking()
   const navigate = useNavigate()
+  const movies = useSelector(selectMovies)
   const likedMovies = movies.filter((movie) => favorites.includes(movie.id))
 
   return (

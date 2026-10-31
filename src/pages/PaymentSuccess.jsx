@@ -2,26 +2,22 @@ import { CircleCheck } from 'lucide-react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import BottomNav from '../components/common/BottomNav'
 import TicketCard from '../components/common/TicketCard'
-import { movies } from '../data/mockData'
 import { useBooking } from '../hooks/useBooking'
+import { useSelector } from 'react-redux'
+import { selectMovieById } from '../redux/slices/movieSlice'
 
 export default function PaymentSuccess() {
   const { movieId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
-  const { bookings, selection, theatre, total } = useBooking()
-  const movie = movies.find((item) => item.id === movieId) || movies[0]
+  const { bookings } = useBooking()
+  const movie = useSelector((state) => selectMovieById(state, movieId))
   const booking =
-    bookings.find((item) => item.id === location.state?.bookingId) || bookings[0] || {
-      theatreName: theatre.name,
-      dateLabel: 'Friday, October 10',
-      time: selection.time,
-      screen: selection.screen,
-      format: selection.format,
-      seats: selection.seats,
-      amount: total,
-      transactionDate: '10/9/2023 10:45 AM',
-    }
+    bookings.find((item) => item.id === location.state?.bookingId) || bookings[0]
+
+  if (!movie || !booking) {
+    return <div className="min-h-dvh bg-app p-5 text-sm text-slate-400">Loading ticket...</div>
+  }
 
   return (
     <div className="relative min-h-dvh bg-app pb-[84px]">

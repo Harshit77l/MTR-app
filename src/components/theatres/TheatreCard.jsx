@@ -11,15 +11,21 @@ export default function TheatreCard({ theatre, onClick }) {
         className="flex h-[64px] w-[64px] shrink-0 items-center justify-center overflow-hidden rounded-[14px]"
         style={{ background: theatre.logoBg }}
       >
-        <img src={theatre.logo} alt="" className="h-full w-full object-contain" />
+        {theatre.logo ? (
+          <img src={theatre.logo} alt="" className="h-full w-full object-contain" />
+        ) : (
+          <span className="text-xl font-bold text-brand">{theatre.name?.[0]}</span>
+        )}
       </div>
       <div className="min-w-0">
         <h3 className="text-[15px] font-semibold text-ink">{theatre.name}</h3>
         <p className="mt-0.5 flex items-center gap-1 text-[12px] text-slate-400">
           <MapPin size={12} className="shrink-0" />
-          <span className="truncate">{theatre.location}</span>
+          <span className="truncate">{theatre.location}{theatre.city ? `, ${theatre.city}` : ''}</span>
         </p>
-        <p className="mt-1 text-[13px] font-semibold text-slate-500">{theatre.priceLabel}</p>
+        {theatre.priceLabel && (
+          <p className="mt-1 text-[13px] font-semibold text-slate-500">{theatre.priceLabel}</p>
+        )}
       </div>
     </button>
   )

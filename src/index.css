@@ -44,8 +44,8 @@ textarea {
 .app-shell {
   width: 100%;
   max-width: 390px;
-  min-height: 100dvh;
-  margin: 0 auto;
+  min-height: 800px;
+  margin: 50px auto;
   background: #f7f8fd;
   position: relative;
   overflow-x: hidden;

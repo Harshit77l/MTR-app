@@ -15,7 +15,7 @@ export default function TicketCard({
 }) {
   return (
     <article className="overflow-hidden rounded-[16px] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
-      <img src={movie.ticketStill || movie.banner} alt={movie.title} className="h-[168px] w-full object-cover" />
+      <img src={movie.ticketStill || movie.banner} alt={movie.title} className="h-[168px] w-full object-cover object-center" />
       <div className="px-4 pb-4 pt-3">
         <h2 className="text-[18px] font-bold text-ink">{movie.title}</h2>
         <div className="mt-3 grid grid-cols-2 gap-y-3 text-[13px]">

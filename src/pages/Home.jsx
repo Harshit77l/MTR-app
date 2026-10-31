@@ -1,21 +1,41 @@
 import { useState } from 'react'
+import { Search } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import MovieRow from '../components/movies/MovieRow'
 import TheatreCard from '../components/theatres/TheatreCard'
 import BottomNav from '../components/common/BottomNav'
-import { movies, theatres } from '../data/mockData'
 import { useBooking } from '../hooks/useBooking'
+import { useSelector } from 'react-redux'
+import { selectMovies, selectMovieStatus } from '../redux/slices/movieSlice'
+import {
+  selectScheduleError,
+  selectScheduleStatus,
+  selectTheatres,
+} from '../redux/slices/scheduleSlice'
 
 export default function Home() {
   const [tab, setTab] = useState('now-showing')
   const navigate = useNavigate()
   const { updateSelection } = useBooking()
+  const movies = useSelector(selectMovies)
+  const theatres = useSelector(selectTheatres)
+  const movieStatus = useSelector(selectMovieStatus)
+  const scheduleStatus = useSelector(selectScheduleStatus)
+  const scheduleError = useSelector(selectScheduleError)
   const visibleMovies = movies.filter((movie) => movie.status === tab)
-  const featured = movies[0]
+  const featured = movies.find((movie) => movie.title === 'Meg 2: The Trench') || movies[0]
 
   const openMovie = (movie) => {
     updateSelection({ movieId: movie.id })
     navigate(`/movies/${movie.id}`)
+  }
+
+  if (movieStatus === 'loading' || scheduleStatus === 'loading' || !featured) {
+    return <div className="min-h-dvh bg-app p-5 text-sm text-slate-400">Loading movies...</div>
+  }
+
+  if (movieStatus === 'failed' || scheduleStatus === 'failed') {
+    return <div className="min-h-dvh bg-app p-5 text-sm text-rose-500">{scheduleError || 'Unable to load movies.'}</div>
   }
 
   return (
@@ -25,8 +45,10 @@ export default function Home() {
         <button
           type="button"
           aria-label="Search"
-          className="absolute right-3 top-3 h-11 w-11"
-        />
+          className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center text-white"
+        >
+          <Search size={27} strokeWidth={2.2} />
+        </button>
       </section>
 
       <div className="mt-4 flex items-end justify-between px-5">

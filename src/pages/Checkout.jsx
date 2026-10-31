@@ -3,17 +3,19 @@ import { useNavigate, useParams } from 'react-router-dom'
 import BottomNav from '../components/common/BottomNav'
 import PageHeader from '../components/common/PageHeader'
 import PrimaryButton from '../components/common/PrimaryButton'
-import { dates, movies, theatres } from '../data/mockData'
 import { useBooking } from '../hooks/useBooking'
 import { formatCurrency } from '../utils/format'
+import { useSelector } from 'react-redux'
+import { selectMovieById } from '../redux/slices/movieSlice'
+import { selectTheatreById, toDateOption } from '../redux/slices/scheduleSlice'
 
 export default function Checkout() {
   const { movieId } = useParams()
   const navigate = useNavigate()
-  const { selection, ticketsTotal, bookingFee, total, confirmBooking } = useBooking()
-  const movie = movies.find((item) => item.id === movieId) || movies[0]
-  const theatre = theatres.find((item) => item.id === selection.theatreId) || theatres[0]
-  const date = dates.find((item) => item.id === selection.dateId) || dates[0]
+  const { selection, ticketsTotal, bookingFee, total, confirmBooking, bookingStatus, bookingError } = useBooking()
+  const movie = useSelector((state) => selectMovieById(state, movieId))
+  const theatre = useSelector((state) => selectTheatreById(state, selection.theatreId))
+  const date = selection.dateId ? toDateOption(selection.dateId) : null
   const [method, setMethod] = useState('card')
   const [saveDetails, setSaveDetails] = useState(false)
   const [form, setForm] = useState({
@@ -23,19 +25,20 @@ export default function Checkout() {
     cvc: '',
   })
 
-  const handlePay = () => {
-    const booking = confirmBooking({
-      movieId: movie.id,
-      theatreName: theatre.name,
-      dateLabel: date.label,
-      time: selection.time,
-      screen: selection.screen,
-      format: selection.format,
-      seats: selection.seats,
-      amount: total,
-      transactionDate: '10/9/2023 10:45 AM',
-    })
-    navigate(`/movies/${movie.id}/success`, { state: { bookingId: booking.id } })
+  const handlePay = async () => {
+    try {
+      const booking = await confirmBooking({
+        showtimeId: selection.showtimeId,
+        selectedSeats: selection.seats,
+      }).unwrap()
+      navigate(`/movies/${movie.id}/success`, { state: { bookingId: booking.id } })
+    } catch (error) {
+      console.error(`Booking failed: ${error.message}`)
+    }
+  }
+
+  if (!movie || !theatre || !date) {
+    return <div className="min-h-dvh bg-app p-5 text-sm text-slate-400">Loading checkout...</div>
   }
 
   return (
@@ -120,7 +123,10 @@ export default function Checkout() {
         )}
 
         <div className="mt-8">
-          <PrimaryButton onClick={handlePay}>Complete Payment</PrimaryButton>
+          {bookingError && <p className="mb-3 text-sm text-rose-500">{bookingError}</p>}
+          <PrimaryButton disabled={bookingStatus === 'loading'} onClick={handlePay}>
+            {bookingStatus === 'loading' ? 'Processing...' : 'Complete Payment'}
+          </PrimaryButton>
         </div>
       </div>
 

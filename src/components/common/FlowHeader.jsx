@@ -15,7 +15,7 @@ export default function FlowHeader({
     <>
       <div className="relative h-[168px] overflow-hidden">
         <img
-          src="/images/flow-hero.png"
+          src={movie.flowHero || movie.banner || '/images/flow-hero.png'}
           alt=""
           className="absolute inset-0 h-full w-full object-cover object-[center_15%]"
         />

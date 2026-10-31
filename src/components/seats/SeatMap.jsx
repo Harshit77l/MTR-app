@@ -1,7 +1,8 @@
-import { occupiedSeats, seatLayout } from '../../data/mockData'
 import { getSeatLabel } from '../../utils/format'
 
-export default function SeatMap({ selectedSeats, onToggle }) {
+export default function SeatMap({ seats, selectedSeats, onToggle }) {
+  const rows = [...new Set(seats.map((seat) => seat.row))]
+
   return (
     <div className="no-scrollbar overflow-x-auto">
       <div className="w-[430px] px-4">
@@ -10,14 +11,16 @@ export default function SeatMap({ selectedSeats, onToggle }) {
           <p className="mt-2 text-center text-[11px] tracking-[0.28em] text-slate-400">SCREEN</p>
         </div>
         <div className="space-y-2">
-          {seatLayout.map((item, index) => (
-            <div key={item.row} className={`flex items-center gap-1.5 ${index === 8 ? 'mt-5' : ''}`}>
-              <span className="w-4 text-[12px] font-medium text-slate-500">{item.row}</span>
+          {rows.map((row, index) => {
+            const rowSeats = seats.filter((seat) => seat.row === row)
+            return (
+            <div key={row} className={`flex items-center gap-1.5 ${index === 8 ? 'mt-5' : ''}`}>
+              <span className="w-4 text-[12px] font-medium text-slate-500">{row}</span>
               <div className="flex flex-1 justify-center gap-[5px]">
-                {Array.from({ length: item.count }, (_, i) => {
-                  const number = i + 1
-                  const id = getSeatLabel(item.row, number)
-                  const occupied = occupiedSeats.includes(id)
+                {rowSeats.map((seat) => {
+                  const number = seat.column
+                  const id = seat.seatNumber || getSeatLabel(row, number)
+                  const occupied = seat.status === 'occupied'
                   const selected = selectedSeats.includes(id)
                   return (
                     <button
@@ -40,7 +43,8 @@ export default function SeatMap({ selectedSeats, onToggle }) {
                 })}
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </div>

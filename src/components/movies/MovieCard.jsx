@@ -10,7 +10,7 @@ export default function MovieCard({ movie, onClick }) {
       <div className="relative h-[158px] overflow-hidden rounded-[14px] bg-slate-200">
         <img src={movie.poster} alt={movie.title} className="h-full w-full object-cover" />
         <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/80 to-transparent" />
-        <div className="absolute bottom-2 left-2 flex items-center gap-1 text-[11px] font-semibold text-white">
+        <div className="absolute bottom-2 right-1 flex items-center gap-1 rounded-[4px] bg-[#08052d] px-1.5 py-1 text-[11px] font-semibold text-white">
           <Star size={11} fill="#fbbf24" className="text-amber-400" />
           {movie.rating.toFixed(1)}
         </div>

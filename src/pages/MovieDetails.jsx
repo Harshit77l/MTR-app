@@ -3,14 +3,17 @@ import { useNavigate, useParams } from 'react-router-dom'
 import BottomNav from '../components/common/BottomNav'
 import PrimaryButton from '../components/common/PrimaryButton'
 import CastCard from '../components/movies/CastCard'
-import { movies } from '../data/mockData'
 import { useBooking } from '../hooks/useBooking'
+import { useSelector } from 'react-redux'
+import { selectMovieById } from '../redux/slices/movieSlice'
 
 export default function MovieDetails() {
   const { movieId } = useParams()
   const navigate = useNavigate()
   const { toggleFavorite, updateSelection } = useBooking()
-  const movie = movies.find((item) => item.id === movieId) || movies[0]
+  const movie = useSelector((state) => selectMovieById(state, movieId))
+
+  if (!movie) return <div className="min-h-dvh bg-app p-5 text-sm text-slate-400">Loading movie...</div>
 
   return (
     <div className="relative min-h-dvh bg-app pb-[84px]">
@@ -47,14 +50,14 @@ export default function MovieDetails() {
           </div>
         </div>
 
-        <p className="mt-4 text-[13px] leading-6 text-slate-400">{movie.synopsis}</p>
+        <p className="mt-4 text-[13px] leading-6 text-slate-400">{movie.synopsis || movie.description}</p>
 
         <h2 className="mt-6 text-[18px] font-bold text-ink">Format Available</h2>
         <div className="mt-3 flex gap-2.5">
           {movie.formats.map((format) => (
             <span
               key={format}
-              className="rounded-[10px] border border-slate-200 bg-white px-3.5 py-1.5 text-[13px] font-medium text-slate-500"
+              className="rounded-[6px] border border-slate-300 bg-transparent px-3.5 py-1.5 text-[13px] font-medium text-brand"
             >
               {format}
             </span>
@@ -62,12 +65,12 @@ export default function MovieDetails() {
         </div>
 
         <h2 className="mt-6 text-[18px] font-bold text-ink">Release Date</h2>
-        <p className="mt-2 text-[14px] text-slate-500">{movie.releaseDate}</p>
+        <p className="mt-2 text-[14px] text-slate-500">{movie.releaseDateLabel || movie.releaseDate}</p>
 
         <h2 className="mt-6 text-[18px] font-bold text-ink">Cast</h2>
         <div className="no-scrollbar mt-3 flex gap-4 overflow-x-auto pb-2">
           {movie.cast.map((person) => (
-            <CastCard key={person.id} person={person} />
+            <CastCard key={person.name} person={person} />
           ))}
         </div>
 

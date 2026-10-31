@@ -2,17 +2,23 @@ import { useNavigate, useParams } from 'react-router-dom'
 import BottomNav from '../components/common/BottomNav'
 import PageHeader from '../components/common/PageHeader'
 import PrimaryButton from '../components/common/PrimaryButton'
-import { dates, movies, theatres } from '../data/mockData'
 import { useBooking } from '../hooks/useBooking'
 import { formatCurrency } from '../utils/format'
+import { useSelector } from 'react-redux'
+import { selectMovieById } from '../redux/slices/movieSlice'
+import { selectTheatreById, toDateOption } from '../redux/slices/scheduleSlice'
 
 export default function BookingSummary() {
   const { movieId } = useParams()
   const navigate = useNavigate()
   const { selection, theatre, ticketsTotal, bookingFee, total } = useBooking()
-  const movie = movies.find((item) => item.id === movieId) || movies[0]
-  const date = dates.find((item) => item.id === selection.dateId) || dates[0]
-  const currentTheatre = theatres.find((item) => item.id === selection.theatreId) || theatre
+  const movie = useSelector((state) => selectMovieById(state, movieId))
+  const currentTheatre = useSelector((state) => selectTheatreById(state, selection.theatreId)) || theatre
+  const date = selection.dateId ? toDateOption(selection.dateId) : null
+
+  if (!movie || !currentTheatre || !date) {
+    return <div className="min-h-dvh bg-app p-5 text-sm text-slate-400">Loading booking summary...</div>
+  }
 
   return (
     <div className="relative min-h-dvh bg-app pb-[84px]">
@@ -24,7 +30,7 @@ export default function BookingSummary() {
 
       <div className="px-5 pt-4">
         <img
-          src={movie.banner}
+          src={movie.ticketStill || movie.banner}
           alt={movie.title}
           className="h-[178px] w-full rounded-[14px] object-cover"
         />

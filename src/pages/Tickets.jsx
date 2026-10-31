@@ -3,15 +3,17 @@ import { ChevronLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/common/BottomNav'
 import TicketCard from '../components/common/TicketCard'
-import { movies, pastBookings } from '../data/mockData'
 import { useBooking } from '../hooks/useBooking'
+import { useSelector } from 'react-redux'
+import { selectMovies } from '../redux/slices/movieSlice'
 
 export default function Tickets() {
   const [tab, setTab] = useState('current')
   const navigate = useNavigate()
-  const { bookings, cancelBooking } = useBooking()
-  const current = bookings
-  const past = pastBookings
+  const { bookings, cancelBooking, bookingError } = useBooking()
+  const movies = useSelector(selectMovies)
+  const current = bookings.filter((booking) => booking.status === 'confirmed')
+  const past = bookings.filter((booking) => booking.status === 'cancelled')
   const list = tab === 'current' ? current : past
 
   return (
@@ -37,11 +39,13 @@ export default function Tickets() {
       </div>
 
       <div className="space-y-4 px-5 pt-5">
+        {bookingError && <p className="text-sm text-rose-500">{bookingError}</p>}
         {list.length === 0 && (
           <p className="pt-10 text-center text-[14px] text-slate-400">No bookings yet.</p>
         )}
         {list.map((booking) => {
-          const movie = movies.find((item) => item.id === booking.movieId) || movies[0]
+          const movie = movies.find((item) => item.id === booking.movieId) || booking.movie
+          if (!movie) return null
           return (
             <TicketCard
               key={booking.id}
